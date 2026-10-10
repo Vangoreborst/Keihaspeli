@@ -1,0 +1,456 @@
+<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Keihäänheitto</title>
+<style>
+html,body{margin:0;height:100%;background:#0b1a2e;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;font-family:system-ui,sans-serif}
+canvas{display:block;width:100vw;height:100vh}
+#gear{position:fixed;right:10px;top:10px;font-size:26px;background:#0008;color:#fff;border:0;border-radius:50%;width:46px;height:46px}
+#trophy{position:fixed;right:64px;top:10px;font-size:24px;background:#0008;color:#fff;border:0;border-radius:50%;width:46px;height:46px}
+#top{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:8}
+#top>div{background:#13294b;color:#fff;padding:16px;border-radius:16px;width:88%;max-width:460px;max-height:86%;overflow:auto}
+#top .r{padding:8px 6px;border-bottom:1px solid #fff2;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+#top .d{display:none;font-size:13px;line-height:1.5;padding:6px 8px;background:#0b1a33;color:#cfe0ff}
+#top button{font-size:17px;padding:8px 18px;margin-top:10px;border:0;border-radius:10px;background:#ffd23f}
+#menu{position:fixed;left:0;right:0;bottom:0;max-height:62%;overflow:auto;background:linear-gradient(#0d2347f2,#06142bf8);color:#fff;padding:14px 16px;display:none;flex-direction:column;gap:7px;z-index:6;border-radius:18px 18px 0 0;font-size:16px}
+@media (orientation:landscape){#menu{left:auto;top:0;width:52%;max-height:100%;border-radius:18px 0 0 18px}}
+#menu input,#menu select{font-size:17px;padding:5px;margin-left:6px;border-radius:8px;border:0;width:120px}
+#menu button,#board button{font-size:18px;font-weight:800;padding:11px;border:0;border-radius:12px;background:#ffd23f;color:#13294b}
+.sw{display:inline-block;width:30px;height:30px;border-radius:50%;margin:3px;border:3px solid transparent;vertical-align:middle}.sw.on{border-color:#fff}
+#board{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:7}
+#board>div{background:#13294b;color:#fff;border-radius:16px;padding:14px;width:92%;max-width:520px;max-height:90%;display:flex;flex-direction:column;gap:8px}
+#bl{overflow:auto;font-size:14px}#bl .r{display:flex;justify-content:space-between;gap:8px;padding:5px 6px;border-bottom:1px solid #fff2}#bl .me{background:#ffd23f33}#bl .out{opacity:.5}
+#menu .pg{display:flex;flex-direction:column;gap:8px}
+#tabs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}#tabs span{padding:5px 10px;border-radius:12px;background:#0b1a33;font-size:13px;cursor:pointer}#tabs .on{background:#ffd23f;color:#13294b}
+#tabs0,#tabs1{display:flex;gap:6px;margin:6px 0}#tabs0 span,#tabs1 span{flex:1;text-align:center;padding:8px 6px;border-radius:12px;background:#0b1a33;font-size:14px;cursor:pointer}#tabs0 .on,#tabs1 .on{background:#7CFC00;color:#13294b;font-weight:800}
+#mbtn{position:fixed;right:118px;top:10px;font-size:24px;background:#0008;color:#fff;border:0;border-radius:50%;width:46px;height:46px}
+#set{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:8}
+#set div{background:#13294b;color:#fff;padding:20px;border-radius:16px;width:80%;max-width:360px;line-height:2}
+#set input{width:80px;font-size:18px;padding:4px;margin-left:8px}
+#set button{font-size:18px;padding:8px 18px;margin-top:8px;border:0;border-radius:10px;background:#ffd23f}
+</style></head><body>
+<canvas id="c"></canvas><button id="gear">⚙</button><button id="trophy">🏆</button><button id="mbtn">☰</button>
+<div id="menu"><div style="font-size:24px;font-weight:800;color:#ffd23f">🏹 KEIHÄÄNHEITTO</div>
+<div id="m0" class="pg"><button id="bP">Pelaaja-asetukset</button><button id="bPr">Harjoittele</button><button id="bK">Kilpailu</button><button id="bE">Ennätykset</button><button id="bS">Tilastot</button><button id="bA">Asetukset</button><button id="bX">Vie tiedot (varmuuskopio)</button><button id="bI">Tuo tiedot</button></div>
+<div id="m1" class="pg" style="display:none"><b>Pelaaja-asetukset</b>
+<label>Nimi <input id="iNm" maxlength="14"></label>
+<div>Paita <span id="swS"></span></div><div>Shortsit <span id="swO"></span></div><div>Keihäs <span id="swJ"></span></div><button class="bk">Takaisin</button></div>
+<div id="m2" class="pg" style="display:none"><b>Kilpailu</b>
+<label>Vastustajia (1–20) <input id="iAI" type="number" min="1" max="20" value="8"></label>
+<label>Vaikeus <select id="iDf"><option value="0">Helppo</option><option value="1" selected>Normaali</option><option value="2">Vaikea</option><option value="3">Mestari</option></select></label>
+<button id="bComp">ALOITA KILPAILU</button><button class="bk">Takaisin</button></div></div>
+<div id="board"><div><b id="bt" style="font-size:20px"></b><div id="bn"></div><div id="bl"></div><button id="bnext">Jatka</button></div></div>
+<div id="top"><div><b id="tt" style="font-size:20px"></b><div id="tabs0"></div><div id="tabs1"></div><div id="tabs"></div><div id="tl"></div><button id="tc">Sulje</button></div></div>
+<div id="set"><div><b>Testiasetukset</b><br>
+<small>Vakio: 25 ja 1.0. Muut arvot tallentuvat Muokatut-ennätyksiin.</small><br>
+Ihanne-napautukset (5 s): <input id="iN" type="number" step="1"><br>
+Vaikeuskerroin (1 = normaali): <input id="iD" type="number" step="0.1"><br>
+Näytä näpäytykset juoksussa: <input id="iS" type="checkbox"><br>Opastus (tauot vaiheiden välillä): <input id="iT" type="checkbox"><br><button id="sv">Tallenna</button></div></div>
+<script>
+const cv=document.getElementById('c'),g=cv.getContext('2d');
+let W,H,F;
+function rs(){const d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;g.setTransform(d,0,0,d,0,0);F=Math.min(W,H*1.7)}
+addEventListener('resize',rs);rs();
+// ---------- tallennus (puhelimen localStorage) ----------
+const KEYS=['kh_cfg','kh_top','kh_prof','kh_stat','kh_hist','kh_q'];
+const LS=(()=>{const M={};let ok=true;try{localStorage.setItem('kh_t','1');localStorage.removeItem('kh_t')}catch(e){ok=false}
+return{getItem:k=>{try{if(ok)return localStorage.getItem(k)}catch(e){}return M[k]==null?null:M[k]},setItem:(k,v)=>{v=String(v);M[k]=v;try{if(ok)localStorage.setItem(k,v)}catch(e){}}}})();
+let CFG={N:25,D:1,show:true,tut:true};try{Object.assign(CFG,JSON.parse(LS.getItem('kh_cfg')||'{}'))}catch(e){}
+let best=0;
+const $=id=>document.getElementById(id);
+function openSet(){$('iN').value=CFG.N;$('iD').value=CFG.D;$('iS').checked=CFG.show;$('iT').checked=CFG.tut;$('set').style.display='flex'}
+$('gear').onclick=()=>{if(S==='wait')openSet()};
+$('sv').onclick=()=>{CFG.N=Math.max(5,+$('iN').value||25);CFG.D=Math.max(.1,+$('iD').value||1);CFG.show=$('iS').checked;CFG.tut=$('iT').checked;try{LS.setItem('kh_cfg',JSON.stringify(CFG))}catch(e){}$('set').style.display='none';best=catBest(curCat())};
+function getTop(){try{const a=JSON.parse(LS.getItem('kh_top')||'[]');return Array.isArray(a)?a.filter(e=>e&&typeof e.R==='number'):[]}catch(e){return[]}}
+const CATN={o:'Vanha',p:'Harjoitus',0:'Helppo',1:'Normaali',2:'Vaikea',3:'Mestari'},catK=x=>x.k!=null?x.k:((x.c===undefined||Array.isArray(x.c))?'o':x.c);
+// vakioasetukset = ihanne 25 ja kerroin 1
+const isStd=e=>e.std!=null?!!e.std:((e.df==null||e.df===1)&&(e.N==null||e.N===25)),curStd=()=>CFG.N===25&&CFG.D===1;
+const catBest=c=>Math.max(0,...getTop().filter(e=>catK(e)===c&&isStd(e)===curStd()).map(e=>e.R));
+const curCat=()=>(typeof MODE!=='undefined'&&MODE==='comp'&&comp)?comp.diff:'p';
+function saveTop(e){e.std=curStd();const a=getTop();a.push(e);a.sort((x,y)=>y.R-x.R);const g2=x=>catK(x)+'|'+isStd(x),cnt={},keep=a.filter(x=>{const k=g2(x);cnt[k]=(cnt[k]||0)+1;return cnt[k]<=20}),r=a.filter(x=>g2(x)===g2(e)).indexOf(e)+1;try{LS.setItem('kh_top',JSON.stringify(keep))}catch(_){}return r}
+// ---------- yhteiset ennätykset (palvelin -> GitHub) ----------
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function getQ(){try{const q=JSON.parse(LS.getItem('kh_q')||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}}
+function setQ(q){try{LS.setItem('kh_q',JSON.stringify(q.slice(-30)))}catch(e){}}
+let flushing=false,ALL=null,ALLT=0,ALLERR=false;
+async function flushQ(){if(flushing)return;flushing=true;try{for(const e of getQ().slice()){try{const r=await fetch('/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(e)});if(r.ok||r.status===400)setQ(getQ().filter(x=>x.id!==e.id));else break}catch(_){break}}ALL=null}finally{flushing=false}}
+function submitScore(e){setQ(getQ().concat([e]));flushQ()}
+function detHTML(e){const f=x=>(+x).toFixed(1);let s=`Aika: ${esc(e.d)||'–'}<br>Taso: ${CATN[catK(e)]}`;
+ if(e.n)s+=`<br>Pelaaja: ${esc(e.n)}`;
+ if(!isStd(e))s+=`<br>Asetukset: ihanne ${esc(e.N)}, kerroin ${esc(e.df)}`;
+ if(e.w)s+=`<br>Tuuli: ${f(e.w.s)} m/s (${e.w.h>=0?'vasta':'myötä'} ${f(Math.abs(e.w.h))}, sivu ${f(Math.abs(e.w.c))})`;
+ if(e.c)s+=`<br>Juoksu: ${+e.tot} napautusta (ihanne ${+e.N}), sekunneittain ${e.c.map(Number).join(' · ')}`;
+ if(e.errs)s+=`<br>Ristiaskeleet: ${e.errs.map(v=>v>=999?'ohi':(v>0?'+':'')+Math.round(v)+' ms').join(', ')}`;
+ if(e.dl!=null)s+=`<br>Heittoviiva: ${f(e.dl)} m ennen viivaa`;
+ if(e.a!=null)s+=`<br>Kulma: ${f(e.a)}°`;
+ if(e.L)s+='<br>Vähennykset: '+Object.entries(e.L).map(([k,v])=>esc(k)+' −'+f(v)).join(', ');
+ return s}
+function wireRows(){$('tl').querySelectorAll('.r').forEach(r=>r.onclick=()=>{const d=r.nextSibling;d.style.display=d.style.display==='block'?'none':'block'});$('top').style.display='flex'}
+const TV={sc:'own',gr:'std',cat:'all'};
+function showTop(){const std=TV.gr==='std',all=TV.sc==='all',src=all?(ALL||[]):getTop();
+ const a=src.filter(e=>isStd(e)===std&&(TV.cat==='all'||catK(e)===TV.cat)).sort((x,y)=>y.R-x.R).slice(0,20);
+ $('tl').innerHTML=(all&&ALLERR?'<p>Ei yhteyttä palvelimeen'+(ALL?' – näytetään vanhat tiedot':'')+'.</p>':'')+(a.length?a.map((e,i)=>`<div class="r"><span>${i+1}. ${all?'<b>'+esc(e.n)+'</b> ':''}<b>${(+e.R).toFixed(2)} m</b>${TV.cat==='all'?' <small>'+CATN[catK(e)]+'</small>':''}</span><small>${esc(e.d)}</small></div><div class="d">${(()=>{try{return detHTML(e)}catch(_){return 'Ei lisätietoja'}})()}</div>`).join(''):(all&&ALLERR&&!ALL?'':'<p>Ei vielä tuloksia tässä luokassa.</p>'));wireRows()}
+function openTop(o){Object.assign(TV,o||{});
+ const chips=(id,arr,key)=>{const el=$(id);el.innerHTML='';arr.forEach(([v,n])=>{const b=document.createElement('span');b.textContent=n;b.className=TV[key]===v?'on':'';b.onclick=()=>openTop({[key]:v});el.appendChild(b)})};
+ $('tt').textContent='🏆 ENNÄTYSTAULUKKO';
+ chips('tabs0',[['own','Omat'],['all','Kaikki pelaajat']],'sc');
+ chips('tabs1',[['std','Vakioasetukset'],['cus','Muokatut']],'gr');
+ chips('tabs',[['all','Kaikki'],['p','Harjoitus'],[0,'Helppo'],[1,'Normaali'],[2,'Vaikea'],[3,'Mestari'],['o','Vanhat']],'cat');
+ if(TV.sc==='all'&&(!ALL||Date.now()-ALLT>15000)){
+  if(!ALL)$('tl').innerHTML='<p>Ladataan…</p>';$('top').style.display='flex';
+  fetch('/scores',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{ALL=Array.isArray(d.items)?d.items:[];ALLT=Date.now();ALLERR=false}).catch(()=>{ALLERR=true}).finally(()=>{if($('top').style.display==='flex'&&TV.sc==='all')showTop()});
+  if(ALL)showTop();return}
+ showTop()}
+$('trophy').onclick=()=>{if(S==='wait')openTop()};
+$('tc').onclick=()=>$('top').style.display='none';
+best=catBest('p');
+const FACTS=['Miesten keihään maailmanennätys on tšekkiläisen Jan Železnýn 98,48 metriä vuodelta 1996.','Miesten keihäs on 2,6–2,7 metriä pitkä ja painaa vähintään 800 grammaa. Naisten keihäs painaa 600 grammaa.','Keihään painopistettä siirrettiin eteenpäin vuonna 1986, koska heitot olivat kasvaneet liian pitkiksi ja vaarallisiksi stadionilla.','Keihäänheitto kuului jo antiikin olympialaisten viisiotteluun.','Matti Järvinen voitti keihäänheiton olympiakultaa Los Angelesissa 1932, ja Suomea on kutsuttu keihäänheiton suurvallaksi.','Huippuheittäjän keihään lähtönopeus on yli 100 km/h.','Heitto mitataan viivasta keihään kärjen ensimmäiseen osumakohtaan, ja kärjen on osuttava maahan ensin.','Ihanteellinen irtilähtökulma on yleensä noin 32–36 astetta, koska keihäs myös liitää ilmavirrassa.','Keihäänheitto on ollut miesten olympialaji vuodesta 1908 ja naisten vuodesta 1932.','Heittäjät hakevat usein lievää vastatuulta, mutta liian voimakas tuuli sotkee keihään lentoradan.'];
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,k)=>a+(b-a)*k,sin=Math.sin,cos=Math.cos,PI=Math.PI;
+// ---------- kamera ----------
+const cam={p:[-46,1.9,7.5],t:[-37,1.2,0]};let bf,br,bu;
+const nrm=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)},crs=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function look(){bf=nrm(cam.t.map((v,i)=>v-cam.p[i]));br=nrm(crs(bf,[0,1,0]));bu=crs(br,bf)}
+function P(x,y,z){const d=[x-cam.p[0],y-cam.p[1],z-cam.p[2]],dz=dot(d,bf);if(dz<.15)return null;return[OX+F*dot(d,br)/dz,OY-F*dot(d,bu)/dz,dz]}
+function cp(pts,ax,lim,gt){const o=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],ia=gt?a[ax]>=lim:a[ax]<=lim,ib=gt?b[ax]>=lim:b[ax]<=lim;if(ia)o.push(a);if(ia!==ib){const k=(lim-a[ax])/(b[ax]-a[ax]);o.push([a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k])}}return o}
+function quad(pts,col){const q=pts.map(p=>{const d=[p[0]-cam.p[0],p[1]-cam.p[1],p[2]-cam.p[2]];return[dot(d,br),dot(d,bu),dot(d,bf)]}),o=[];
+ for(let i=0;i<q.length;i++){const a=q[i],b=q[(i+1)%q.length],ia=a[2]>=.15,ib=b[2]>=.15;if(ia)o.push(a);if(ia!==ib){const k=(.15-a[2])/(b[2]-a[2]);o.push([a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,.15])}}
+ if(o.length<3)return;let r=o.map(p=>[OX+F*p[0]/p[2],OY-F*p[1]/p[2]]);
+ r=cp(r,0,-W,1);r=cp(r,0,2*W,0);r=cp(r,1,-H,1);r=cp(r,1,2*H,0);if(r.length<3)return;
+ g.fillStyle=col;g.beginPath();r.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.fill()}
+function seg(a,b,w,col){const A=P(...a),B=P(...b);if(!A||!B)return;g.strokeStyle=col;g.lineWidth=cl(w*F/((A[2]+B[2])/2),1,70);g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke()}
+// ---------- tila ----------
+let OX=0,OY=0,MODE='menu',COL,comp=null,aiMode=null,aiT0=0,fw=[],fwOn=false,winf,S='menu',now=0,dt=0,tt=0,waitT0=0,wOff=Math.random()*50,W4=[1,2,3,4].map(()=>Math.random()*6),wnd,windLoss=0,taps=[],runT0=0,pos=-40,phi=0,spd=0,steps=[],stepT0=0,p0=0,relT0=0,hold=false,holdT0=0,ang=33,thrT0=0,fly=null,res=null,parts=[],floats=[],landT=0,shown=0,heldAng=33,relX=0,lastNow=0,resT0=0,intro=null;
+const START=-40,GAP=3.9,RV=1.6,STEPD=3.2;
+function windAt(t){const s=cl(3.2+2.3*sin(.7*t+W4[0])+1.1*sin(1.9*t+W4[1]),.3,6.8),al=1.9*sin(.31*t+W4[2])+.8*sin(.83*t+W4[3]);const h=s*cos(al),c=s*sin(al);return{s,al,h,c,loss:5*Math.min(1,Math.hypot((h-3)/6,c/5))}}
+const wcol=l=>`hsl(${Math.round(125*(1-cl(l/3.8,0,1)))},85%,50%)`;
+const wlab=l=>l<.5?'OPTIMI':l<1.5?'HYVÄ':l<3?'KOHTALAINEN':'HUONO';
+function startIntro(t,s,fn){if(!CFG.tut){fn();return}intro={t,s,fn,start:now,end:now+2.4}}
+function reset(){COL=PROF;best=catBest(curCat());W4=[1,2,3,4].map(()=>Math.random()*6);wOff=Math.random()*50;intro=null;S='wait';pos=START;phi=0;spd=0;taps=[];hold=false;fly=null;res=null;thrown=0;waitT0=now;parts=[];floats=[];cam.p=[pos-6.5,1.9,7.5];cam.t=[pos+3.5,1.2,0]}
+
+// ---------- syöte ----------
+function down(){
+ if(intro)return;
+ if(S==='menu'||S==='aiwait')return;if(S==='ai'){compStep();return}if(S==='fin'){finTap();return}
+ if(S==='wait'){windLoss=wnd.loss;winf={s:wnd.s,h:wnd.h,c:wnd.c};startIntro('JUOKSU','Naputa tasaisessa tahdissa – tasaisuus ratkaisee',()=>{runT0=now;taps=CFG.tut?[]:[now];S='run'})}
+ else if(S==='run'){taps.push(now)}
+ else if(S==='steps'){for(const s of steps){if(s.err==null&&now>s.t-.8&&now<s.t+.45){s.err=(now-s.t)*1000;floats.push({t:now,x:s.x,y:s.y-60,s:(s.err>0?'+':'')+Math.round(s.err)+' ms',c:Math.abs(s.err)<60?'#7CFC00':Math.abs(s.err)<150?'#ffd23f':'#ff5a5a'});break}}}
+ else if(S==='rel'&&!hold){hold=true;holdT0=now}
+ else if(S==='res'&&now-resT0>.8){statAdd();if(MODE==='comp')compHumanDone();else reset()}
+}
+function up(){if(S==='rel'&&hold){hold=false;heldAng=ang;relX=pos;S='throw';thrT0=now}}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();down()});
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat)down()});addEventListener('keyup',e=>{if(e.code==='Space')up()});
+// ---------- pelilogiikka ----------
+function endRun(){
+ const N=CFG.N,r=N/5,c=[0,0,0,0,0];let tot=0;
+ taps.forEach(t=>{const b=Math.floor(t-runT0);if(b>=0&&b<5){c[b]++;tot++}});
+ const dev=Math.abs(tot-N)/N,ev=c.reduce((a,x)=>a+Math.abs(x-r),0);
+ res={Lrun:(Math.min(16,40*dev)+Math.min(12,1.2*ev))*CFG.D,tot,c};
+ startIntro('RISTIASKELEET','Napauta, kun rengas sulkeutuu',()=>{p0=Math.min(pos,-GAP-1.5);stepT0=now;steps=[0,1,2].map(i=>({t:now+1+i*.85,x:W*(i%2?.7:.3),y:H*.42,err:null}));S='steps'});
+}
+function endSteps(){let L=0;steps.forEach(s=>{L+=(s.err==null?4:4*Math.min(Math.abs(s.err)/260,1))});res.Ls=L*CFG.D;res.errs=steps.map(s=>s.err);startIntro('HEITTO','Paina pohjaan, vapauta ennen viivaa',()=>{S='rel';relT0=now;pos=-GAP})}
+function launch(){
+ if(aiMode){const R=aiMode.R,th=heldAng*PI/180,v=Math.sqrt(R*9.81/sin(2*th));const q=compRank(aiMode.p,R);aiMode.rank=q.r;aiMode.r0=q.r0;aiMode.pool=q.n;res={R,a:heldAng,ai:1,L:{}};fly={x0:relX,R,th,T:cl(R/(v*cos(th)),2.2,6)*1.15,t:0,Hk:Math.min(45,R*Math.tan(th)/4),x:relX,y:1.9,ja:th};S='fly';return}
+ const a=heldAng,d=Math.max(0,-relX);
+ const L={Tuuli:windLoss,Juoksu:res.Lrun,Ristiaskeleet:res.Ls,Heittoviiva:Math.min(8,d*6)*CFG.D,['Kulma '+a.toFixed(1)+'°']:Math.min(12,Math.abs(a-33)*.7)*CFG.D};
+ const sum=Object.values(L).reduce((x,y)=>x+y,0),R=Math.max(6,100-sum),th=a*PI/180,v=Math.sqrt(R*9.81/sin(2*th));
+ res={L,R,a,tot:res.tot,c:res.c,errs:res.errs,w:winf,dl:d,N:CFG.N};fly={x0:relX,R,th,T:cl(R/(v*cos(th)),2.2,6)*1.15,t:0,Hk:Math.min(45,R*Math.tan(th)/4),x:relX,y:1.9,ja:th};S='fly';
+}
+function flyPos(){const f=fly,s=cl(f.t/f.T,0,1);f.x=f.x0+(f.R-f.x0)*s;f.y=1.9*(1-s)+4*f.Hk*s*(1-s);const dx=f.R-f.x0,dy=-1.9+4*f.Hk*(1-2*s);f.ja=s>=1?-.5:Math.atan2(dy,dx*(1.1))}
+function update(){
+ tt+=dt;
+ if(S==='aiwait'&&now-aiT0>1.6){heldAng=31+Math.random()*4;relX=-.6;pos=-.6;thrT0=now;S='throw'}
+ if(S==='wait'&&!intro){wnd=windAt(now-waitT0+wOff);if(now-waitT0>15){S='res';resT0=now;res={foul:true,msg:'AIKA YLITTYI'}}}
+ if(intro){spd=lerp(spd,2,1-Math.exp(-dt));phi+=dt*(2+spd*1.5)*.3;if(now>=intro.end){const f=intro.fn;intro=null;f()}}
+ else if(S==='run'){
+  const tr=now-runT0,n=taps.filter(t=>now-t<.8).length,rate=n/.8;
+  spd=lerp(spd,rate*32/CFG.N,1-Math.exp(-6*dt));pos+=spd*dt;phi+=dt*(2+spd*1.55);
+  if(tr>=5)endRun();
+ }else if(S==='steps'){
+  const k=(now-stepT0)/STEPD;pos=lerp(p0,-GAP,cl(k,0,1));spd=lerp(spd,(-GAP-p0)/STEPD,.1);phi+=dt*(2+spd*1.5);
+  steps.forEach(s=>{if(s.err==null&&now>s.t+.45)s.err=999});
+  if(k>=1)endSteps();
+ }else if(S==='rel'){
+  pos+=RV*dt;spd=RV;phi+=dt*4;
+  if(hold)ang=33-21*cos(2*PI*(now-holdT0)/2.2);
+  if(pos>=0){S='res';resT0=now;res={foul:true,msg:'HYLÄTTY – yliastuttu'};hold=false}
+ }else if(S==='throw'){
+  spd=0;if(now-thrT0>=.35)launch();
+ }
+ if(S==='fly'){fly.t+=dt;flyPos();spd=0;
+  if(fly.t>=fly.T){S='land';landT=now;for(let i=0;i<40;i++)parts.push({x:fly.R,y:.1,z:0,vx:(Math.random()-.5)*3,vy:Math.random()*4,vz:(Math.random()-.5)*3,l:1.2,c:'#6b4a2b',s:.12})}}
+ if(S==='land'&&aiMode&&now-landT>3.2){const a=aiMode;aiMode=null;recordT(a.p,a.R);comp.oi++;compStep()}
+ else if(S==='land'&&!aiMode&&now-landT>1.4){S='res';resT0=now;shown=0;
+  const ent={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),n:PROF.name||'Pelaaja',k:MODE==='comp'?comp.diff:'p',df:CFG.D,R:res.R,d:new Date().toLocaleString('fi-FI',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}),L:res.L,a:res.a,tot:res.tot,c:res.c,errs:res.errs,w:res.w,dl:res.dl,N:res.N};
+  res.rank=saveTop(ent);submitScore(ent);
+  res.cat=CATN[MODE==='comp'?comp.diff:'p'];if(res.R>=90)res.fact=FACTS[(Math.random()*FACTS.length)|0];if(CFG.tut){CFG.tut=false;try{LS.setItem('kh_cfg',JSON.stringify(CFG))}catch(e){}}
+  best=catBest(curCat());
+  if(res.R>=80)for(let i=0;i<90;i++)parts.push({x:res.R,y:2,z:0,vx:(Math.random()-.5)*14,vy:Math.random()*12,vz:(Math.random()-.5)*14,l:2,c:`hsl(${Math.random()*360},90%,60%)`,s:.15,g:1})}
+ if((S==='run'||S==='steps'||S==='rel')&&spd>1.5&&Math.random()<.6)parts.push({x:pos-.2,y:.05,z:.1,vx:-spd*.2,vy:.6+Math.random(),vz:(Math.random()-.5)*.8,l:.7,c:'#d9b38c',s:.1});
+ parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;if(p.g||p.s>.11)p.vy-=9*dt;else p.vy-=1*dt;p.l-=dt;if(p.y<0){p.y=0;p.vy*=-.3}});parts=parts.filter(p=>p.l>0);
+ // kamera
+ let tp,tg,k=1-Math.exp(-4*dt);
+ if(S==='menu'){const a=sin(tt*.35)*.7+.35;tp=[START+sin(a)*6.5,1.4,cos(a)*6.5];tg=[START,.95,0];k=1}
+ else if(S==='fly'){tp=[fly.x-20,3.5+fly.y*.35,15];tg=[fly.x+10,fly.y*.5,0];k=1-Math.exp(-2.5*dt)}
+ else if(S==='land'||S==='res'&&res&&res.R){tp=[res.R-22,4,16];tg=[res.R+3,1,0];k=1-Math.exp(-2*dt)}
+ else{tp=[pos-6.5,1.9,7.5];tg=[pos+3.5,1.2,0]}
+ cam.p=cam.p.map((v,i)=>lerp(v,tp[i],k));cam.t=cam.t.map((v,i)=>lerp(v,tg[i],k));
+}
+// ---------- hahmo ----------
+function limb(o,a1,l1,a2,l2){const j=[o[0]+sin(a1)*l1,o[1]-cos(a1)*l1,o[2]];return[j,[j[0]+sin(a2)*l2,j[1]-cos(a2)*l2,o[2]]]}
+function pose(){
+ const run=(amp,ph)=>[0,1].map(i=>{const p=ph+i*PI,a=.85*amp*sin(p);return[a,a-(.35+.95*amp*Math.max(0,sin(p+1.5)))]});
+ if(S==='wait'||S==='menu'||S==='aiwait'||S==='ai'||S==='fin'){const b=sin(tt*2)*.02;return{lean:.05+b,legs:[[.06,.06],[-.04,-.04]],arm:[.1,.3],hand:[.2,.22],ja:.12}}
+ if(S==='run'){const am=cl(spd/6,.1,1),s=sin(phi*2);return{lean:.1+.1*am,legs:run(am,phi),arm:[-.9*am*sin(phi),-.9*am*sin(phi)+1+.3*am],hand:[.2+.04*s,.22],ja:.08+.04*s}}
+ if(S==='steps'||S==='rel'){const k=S==='rel'?1:cl((now-stepT0)/(STEPD*.8),0,1),a=S==='rel'&&hold?ang*PI/180:.55;
+  return{lean:lerp(.15,-.35,k),legs:run(.65,phi),arm:[lerp(-.5,-1.4,k),lerp(.4,-.8,k)],hand:[lerp(.2,-.75,k),lerp(.22,.05,k)],ja:lerp(.1,a,k)}}
+ // heitto
+ const u=S==='throw'?cl((now-thrT0)/.35,0,1):1,e=u*u*(3-2*u),th=(fly?fly.th:heldAng*PI/180),psi=-1.7+2.6*e;
+ return{lean:lerp(-.4,.45,e),legs:[[.55,.35],[lerp(-.5,-.4,e),lerp(-1.1,-.3,e)]],arm:[lerp(-1.0,.8,e),lerp(-1,.3,e)],hand:[.68*sin(psi),.68*cos(psi)],ja:lerp(.5,th,e),thr:u<.6}
+}
+function thrower(){
+ const x=pos,pz=pose();g.lineCap='round';
+ const zs=[-.12,.12];let lg=pz.legs.map((l,i)=>limb([x,0,zs[i]],l[0],.47,l[1],.47));
+ const hy=-Math.min(...lg.map(l=>l[1][1]))+.07;
+ lg=pz.legs.map((l,i)=>limb([x,hy,zs[i]],l[0],.47,l[1],.47));
+ const ln=pz.lean,sh=[x+sin(ln)*.55,hy+cos(ln)*.55];
+ // varjo
+ const sp=P(x,0,0);if(sp){g.fillStyle='#0004';g.beginPath();g.ellipse(sp[0],sp[1],.7*F/sp[2],.14*F/sp[2],0,0,7);g.fill()}
+ const leg=i=>{seg([x,hy,zs[i]],lg[i][0],.17,COL.shorts);seg(lg[i][0],lg[i][1],.11,'#f1c9a5');seg(lg[i][1],[lg[i][1][0]+.2,lg[i][1][1]-.02,zs[i]],.09,'#111')};
+ const armL=()=>{const a=limb([sh[0],sh[1]-.02,-.2],pz.arm[0],.3,pz.arm[1],.3);seg([sh[0],sh[1]-.02,-.2],a[0],.09,'#f1c9a5');seg(a[0],a[1],.08,'#f1c9a5')};
+ leg(0);armL();
+ seg([x,hy,0],[sh[0],sh[1],0],.34,COL.shorts);seg([x,hy+.18,0],[sh[0],sh[1],0],.34,COL.shirt);
+ const hd=[sh[0]+sin(ln)*.2,sh[1]+cos(ln)*.2+.05,0],H_=P(...hd);
+ seg(sh,hd,.09,'#f1c9a5');
+ if(H_){g.fillStyle='#f1c9a5';g.beginPath();g.arc(H_[0],H_[1],.12*F/H_[2],0,7);g.fill();g.fillStyle='#e8c35a';g.beginPath();g.arc(H_[0]-.02*F/H_[2],H_[1]-.04*F/H_[2],.115*F/H_[2],PI,0);g.fill()}
+ leg(1);
+ const S3=[sh[0],sh[1]-.02,.22],hand=[S3[0]+pz.hand[0],S3[1]+pz.hand[1],.22];
+ const dx=hand[0]-S3[0],dy=hand[1]-S3[1],d=Math.min(Math.hypot(dx,dy),.58),hh=Math.sqrt(Math.max(0,.09-d*d/4));
+ let nx=dy/Math.hypot(dx,dy),ny=-dx/Math.hypot(dx,dy);if(ny>0){nx=-nx;ny=-ny}
+ const el=[S3[0]+dx/2+nx*hh,S3[1]+dy/2+ny*hh,.22];
+ seg(S3,el,.09,COL.shirt);seg(el,hand,.08,'#f1c9a5');
+ if(pz.thr!==false&&(S!=='fly'&&S!=='land'&&S!=='res'||(S==='res'&&!fly))){
+  const j=[cos(pz.ja),sin(pz.ja)];seg([hand[0]-j[0]*.9,hand[1]-j[1]*.9,.22],[hand[0]+j[0]*1.75,hand[1]+j[1]*1.75,.22],.035,COL.jav);seg([hand[0]-.12*j[0],hand[1]-.12*j[1],.22],[hand[0]+.12*j[0],hand[1]+.12*j[1],.22],.05,'#ff9f1c')}
+}
+function javelin(x,y,a,w){const j=[cos(a),sin(a)];seg([x-j[0]*1.2,y-j[1]*1.2,0],[x+j[0]*1.2,y+j[1]*1.2,0],w||.05,COL.jav);seg([x-.1*j[0],y-.1*j[1],0],[x+.1*j[0],y+.1*j[1],0],.07,'#ff9f1c')}
+// ---------- maailma ----------
+const CC=['#ff5a5f','#ffd23f','#ffffff','#3a86ff','#8ac926','#ff9f1c'],crowd=[];
+for(let y=1;y<9.6;y+=.6){for(let x=-72;x<172;x+=2.8)crowd.push({x:x+Math.random()*2,y,z:-34-y*.8});for(let z=-32;z<22;z+=3){crowd.push({x:172+y*.8,y,z:z+Math.random()*2});crowd.push({x:-74-y*.8,y,z:z+Math.random()*2})}}
+crowd.forEach(c=>{c.c=CC[(Math.random()*6)|0];c.p=Math.random()*6});
+function flag(x0,i){const zp=-42,yt=15.5,dir=(wnd&&wnd.h>=0)?-1:1,amp=.1+.1*(wnd?wnd.s:3),pt=[];
+ seg([x0,11.2,zp],[x0,15.8,zp],.14,'#e5e5e5');
+ for(let k=0;k<=6;k++){const f=k/6;pt.push([x0+dir*f*3.2,sin(tt*4-f*5+i)*amp*f*1.6,sin(tt*4-f*5+i+1)*amp*f*.4])}
+ for(let k=0;k<6;k++){const a=pt[k],b=pt[k+1],Q=(u,v,c)=>quad([[a[0],yt-1.6*u+a[2],zp+a[1]],[b[0],yt-1.6*u+b[2],zp+b[1]],[b[0],yt-1.6*v+b[2],zp+b[1]],[a[0],yt-1.6*v+a[2],zp+a[1]]],c);Q(0,1,'#fff');Q(.38,.64,'#1d4ed8');if(k===1)Q(0,1,'#1d4ed8')}}
+function sign(x,t,bg,fg){seg([x-1.1,0,2.1],[x-1.1,1.6,2.1],.07,'#ccc');seg([x+1.1,0,2.1],[x+1.1,1.6,2.1],.07,'#ccc');quad([[x-1.4,1.0,2.1],[x+1.4,1.0,2.1],[x+1.4,1.8,2.1],[x-1.4,1.8,2.1]],bg);text3(t,[x,1.4,2.12],[1,0,0],[0,1,0],.34,fg)}
+function text3(t,O,u,v,sz,col,st){const a=P(...O),b=P(O[0]+u[0],O[1]+u[1],O[2]+u[2]),c=P(O[0]+v[0],O[1]+v[1],O[2]+v[2]);if(!a||!b||!c||a[2]<1||sz*F/a[2]>H*.35)return;
+ g.save();g.transform((b[0]-a[0])*.01,(b[1]-a[1])*.01,-(c[0]-a[0])*.01,-(c[1]-a[1])*.01,a[0],a[1]);
+ g.font=`800 ${sz*100}px system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';if(st){g.lineWidth=sz*12;g.strokeStyle=st;g.lineJoin='round';g.strokeText(t,0,0)}g.fillStyle=col;g.fillText(t,0,0);g.restore()}
+function world(){
+ look();
+ const sk=g.createLinearGradient(0,0,0,H*.6);sk.addColorStop(0,'#2a6fdb');sk.addColorStop(.6,'#8ec9ff');sk.addColorStop(1,'#fde8c8');g.fillStyle=sk;g.fillRect(0,0,W,H);
+ const sg=g.createRadialGradient(W*.82,H*.15,2,W*.82,H*.15,H*.18);sg.addColorStop(0,'#fff8d0');sg.addColorStop(.25,'#ffe58a');sg.addColorStop(1,'#ffe58a00');g.fillStyle=sg;g.fillRect(0,0,W,H*.5);
+ g.fillStyle='#ffffffb0';for(let i=0;i<6;i++){const cx=((i*W/5+tt*7)%(W+240))-120,cy=H*(.07+.05*(i%3));for(let k=0;k<4;k++){g.beginPath();g.ellipse(cx+k*34-50,cy+(k%2)*8,48,18,0,0,7);g.fill()}}
+ {const dh=nrm([bf[0],0,bf[2]]),hy=cl(OY-F*dot(dh,bu)/dot(dh,bf),-H,2*H);g.fillStyle='#2e6b2e';g.fillRect(0,hy,W,H*2)}
+ // stadion
+ for(const x of[-60,0,60,120]){seg([x,0,-46],[x,17,-46],.6,'#5b6785');quad([[x-4,17,-46],[x+4,17,-46],[x+4,19,-46],[x-4,19,-46]],'#fff3b0')}
+ quad([[-75,0,-34],[172,0,-34],[172,10,-42],[-75,10,-42]],'#3b4560');
+ for(let y=0;y<10;y+=2)quad([[-75,y,-34-y*.8],[172,y,-34-y*.8],[172,y+1,-34-(y+1)*.8],[-75,y+1,-34-(y+1)*.8]],'#46526f');
+ quad([[-75,10,-42],[172,10,-42],[172,11.2,-42],[-75,11.2,-42]],'#2a3350');
+ quad([[172,0,-34],[172,0,22],[180,10,22],[180,10,-34]],'#3b4560');quad([[-75,0,-34],[-75,0,22],[-83,10,22],[-83,10,-34]],'#3b4560');
+ crowd.forEach(c=>{const p=P(c.x,c.y+sin(tt*4+c.p)*.08,c.z);if(!p||p[0]<-20||p[0]>W+20||p[1]<-20||p[1]>H)return;const s=.45*F/p[2];g.fillStyle=c.c;g.fillRect(p[0]-s/2,p[1]-s,s,s*1.3);if((tt*2+c.p*9)%7<.06){g.fillStyle='#fff';g.fillRect(p[0]-s,p[1]-s*1.5,s*2,s*2)}});
+ for(let x=-70,i=0;x<=170;x+=20,i++)flag(x,i);
+ for(let x=-75,i=0;x<172;x+=6,i++)quad([[x,0,-34],[x+6,0,-34],[x+6,1.1,-34],[x,1.1,-34]],['#e63946','#1d4ed8','#f4f7ff'][i%3]);
+ // nurmi
+ const zf=cam.p[2]-1.5;for(let x=-80;x<175;x+=5)quad([[x,0,-33],[x+5,0,-33],[x+5,0,zf],[x,0,zf]],(x/5|0)%2?'#2f7d32':'#3a9140');
+ quad([[-45,.01,-1.1],[1.6,.01,-1.1],[1.6,.01,1.1],[-45,.01,1.1]],'#c4472e');
+ quad([[-45,.02,-1.1],[1.6,.02,-1.1],[1.6,.02,-1],[-45,.02,-1]],'#fff');quad([[-45,.02,1],[1.6,.02,1],[1.6,.02,1.1],[-45,.02,1.1]],'#fff');
+ const SM=START+32;quad([[SM,.03,-1.1],[SM+.35,.03,-1.1],[SM+.35,.03,1.1],[SM,.03,1.1]],'#ffd23f');quad([[SM+.7,.03,-1.1],[SM+1,.03,-1.1],[SM+1,.03,1.1],[SM+.7,.03,1.1]],'#ffd23f');
+ quad([[0,.03,-1.1],[.3,.03,-1.1],[.3,.03,1.1],[0,.03,1.1]],'#fff');
+ quad([[0,.03,-1.5],[.3,.03,-1.5],[.3,.03,-1.1],[0,.03,-1.1]],'#fff');quad([[0,.03,1.1],[.3,.03,1.1],[.3,.03,1.5],[0,.03,1.5]],'#fff');
+ quad([[START,.03,-1.1],[START+.1,.03,-1.1],[START+.1,.03,1.1],[START,.03,1.1]],'#fff');
+ quad([[-GAP,.03,-1.1],[-GAP+.3,.03,-1.1],[-GAP+.3,.03,1.1],[-GAP,.03,1.1]],'#3ad1ff');
+ sign(SM+.5,'RISTIASKELEET','#ffd23f','#2a2a2a');sign(0,'HEITTOVIIVA','#fff','#d62828');
+ for(const sg2 of[-1,1])quad([[0,.02,sg2*1.2],[135,.02,sg2*36.3],[135,.02,sg2*36.5],[0,.02,sg2*1.4]],'#fff');
+ for(let x=20;x<=130;x+=10){const w=x*.26+1.2;quad([[x,.02,-w],[x+.25,.02,-w],[x+.25,.02,w],[x,.02,w]],'#ffffffcc');
+  text3(x+' m',[x+1.5,.03,-w-2.2],[1,0,0],[0,0,-1],1.5,'#fff','#00000066')}
+ quad([[13,11.5,-42.4],[27,11.5,-42.4],[27,15.2,-42.4],[13,15.2,-42.4]],'#0b1220');
+ text3('KEIHÄÄNHEITTO',[20,14.2,-42.3],[1,0,0],[0,1,0],1.4,'#ffb703');text3('ENNÄTYS '+best.toFixed(1)+' m',[20,12.5,-42.3],[1,0,0],[0,1,0],1.0,'#7CFC00');
+}
+function drawParts(){parts.forEach(p=>{const q=P(p.x,p.y,p.z);if(!q)return;g.globalAlpha=cl(p.l*1.2,0,.9);g.fillStyle=p.c;g.beginPath();g.arc(q[0],q[1],Math.max(1.5,p.s*F/q[2]),0,7);g.fill()});g.globalAlpha=1}
+// ---------- HUD ----------
+function txt(s,x,y,sz,c,al,st){g.font=`800 ${sz}px system-ui,sans-serif`;g.textAlign=al||'center';if(st){g.lineWidth=sz/7;g.strokeStyle=st;g.strokeText(s,x,y)}g.fillStyle=c;g.fillText(s,x,y)}
+function hudWind(){
+ const w=wnd||windAt(0),Rr=Math.min(W,H)*.1,cx=Rr+18,cy=Rr+18,col=wcol(w.loss);
+ g.fillStyle='#0a1a33cc';g.beginPath();g.arc(cx,cy,Rr+8,0,7);g.fill();g.strokeStyle=col;g.lineWidth=4;g.beginPath();g.arc(cx,cy,Rr,0,7);g.stroke();
+ g.strokeStyle='#ffffff55';g.lineWidth=2;for(let i=0;i<8;i++){const a=i*PI/4;g.beginPath();g.moveTo(cx+sin(a)*Rr*.8,cy-cos(a)*Rr*.8);g.lineTo(cx+sin(a)*Rr,cy-cos(a)*Rr);g.stroke()}
+ g.fillStyle='#fff';g.beginPath();g.moveTo(cx,cy-Rr-6);g.lineTo(cx-6,cy-Rr+6);g.lineTo(cx+6,cy-Rr+6);g.fill();
+ const b=w.al+PI,L=Rr*(.35+.6*cl(w.s/6.5,0,1)),ex=cx+sin(b)*L,ey=cy-cos(b)*L,sx=cx-sin(b)*L*.6,sy=cy+cos(b)*L*.6;
+ g.strokeStyle=col;g.fillStyle=col;g.lineWidth=6;g.lineCap='round';g.beginPath();g.moveTo(sx,sy);g.lineTo(ex,ey);g.stroke();
+ g.beginPath();g.moveTo(ex+sin(b)*12,ey-cos(b)*12);g.lineTo(ex+cos(b)*8,ey+sin(b)*8);g.lineTo(ex-cos(b)*8,ey-sin(b)*8);g.fill();
+ txt(w.s.toFixed(1)+' m/s',cx,cy+Rr+34,Math.max(15,Rr*.28),col,'center','#000a');
+ txt((w.h>=0?'vasta ':'myötä ')+Math.abs(w.h).toFixed(1)+' · sivu '+Math.abs(w.c).toFixed(1),cx,cy+Rr+54,Math.max(11,Rr*.2),'#fff','center','#000a');
+ txt(wlab(w.loss),cx,cy+Rr+74,Math.max(12,Rr*.22),col,'center','#000a');
+}
+let dq=0;
+const TS=[[0,[255,225,77]],[.6,[255,159,28]],[.88,[76,209,55]],[1.12,[76,209,55]],[1.4,[230,57,70]],[1.8,[107,0,0]]];
+function tcol(q,a){q=cl(q,0,1.8);for(let i=1;i<TS.length;i++)if(q<=TS[i][0]){const A=TS[i-1],B=TS[i],k=(q-A[0])/(B[0]-A[0]),c=A[1].map((v,j)=>Math.round(lerp(v,B[1][j],k)));return a?`rgba(${c},${a})`:`rgb(${c})`}return 'rgb(107,0,0)'}
+function tempoBar(){const m=Math.min(W,H),tr=now-runT0,n=taps.filter(t=>now-t<.8).length,q=n/Math.max(.35,Math.min(.8,tr))/(CFG.N/5);dq=lerp(dq,q,1-Math.exp(-10*dt));
+ const bw=Math.min(W*.6,420),bh=m*.05,x=W/2-bw/2,y=H*.34;
+ g.fillStyle='#0a1a33cc';g.beginPath();g.roundRect(x-6,y-6,bw+12,bh+12,bh);g.fill();
+ const gr=g.createLinearGradient(x,0,x+bw,0);for(let i=0;i<=18;i++)gr.addColorStop(i/18,tcol(i/10,.3));g.fillStyle=gr;g.beginPath();g.roundRect(x,y,bw,bh,bh/2);g.fill();
+ g.fillStyle=tcol(dq);g.beginPath();g.roundRect(x,y,Math.max(bh,bw*cl(dq/1.8,0,1)),bh,bh/2);g.fill();
+ g.fillStyle='#fff';g.fillRect(x+bw/1.8-1,y-3,2,bh+6);g.fillRect(x,y+bh+10,bw*cl(tr/5,0,1),4);
+ txt('TAHTI',W/2,y-14,m*.04,'#fff','center','#000')}
+function burst(x,y){const c=`hsl(${Math.random()*360},95%,60%)`;for(let i=0;i<70;i++){const a=Math.random()*6.28,v=60+Math.random()*180;fw.push({x,y,vx:cos(a)*v,vy:sin(a)*v,l:1.4+Math.random()*.6,c})}}
+function fx(){
+ if(fwOn&&Math.random()<.07)burst(W*(.12+.76*Math.random()),H*(.12+.4*Math.random()));
+ fw.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=90*dt;p.vx*=.99;p.l-=dt;g.globalAlpha=cl(p.l,0,1);g.fillStyle=p.c;g.beginPath();g.arc(p.x,p.y,2.6,0,7);g.fill()});g.globalAlpha=1;fw=fw.filter(p=>p.l>0);
+ const v=g.createRadialGradient(W/2,H*.5,Math.min(W,H)*.35,W/2,H*.5,Math.max(W,H)*.75);v.addColorStop(0,'#0000');v.addColorStop(1,'#00000066');g.fillStyle=v;g.fillRect(0,0,W,H)}
+function hud(){
+ const m=Math.min(W,H);
+ if(S==='wait'||S==='run'||S==='steps')hudWind();
+ if(S==='wait'&&!intro){
+  const l=cl(15-(now-waitT0),0,15),bw=W*.5;g.fillStyle='#0a1a33cc';g.fillRect(W/2-bw/2,68,bw,18);g.fillStyle=l>5?'#7CFC00':l>2.5?'#ffd23f':'#ff4d4d';g.fillRect(W/2-bw/2,68,bw*l/15,18);
+  txt(l.toFixed(1)+' s',W/2,112,m*.06,'#fff','center','#000a');
+  const pu=1+.05*sin(tt*5);g.save();g.translate(W/2,H*.8);g.scale(pu,pu);txt('NAPAUTA, KUN TUULI ON VIHREÄ',0,0,Math.min(m*.06,W*.045),'#fff','center','#000');g.restore();
+  txt('Ennätys ('+CATN[curCat()]+(curStd()?'':', muokatut')+'): '+best.toFixed(2)+' m',W/2,H*.8+m*.07,m*.04,'#ffd23f','center','#000a');
+ }
+ if(S==='run'&&!intro){if(!CFG.show)txt('NAPUTA TASAISESSA TAHDISSA!',W/2,H*.18,m*.06,'#fff','center','#000');
+  if(CFG.show)tempoBar();}
+ if(S==='steps'&&!intro){
+  txt('RISTIASKELEET',W/2,H*.14,m*.055,'#fff','center','#000');
+  steps.forEach((s,i)=>{if(s.err!=null||now<s.t-.8||now>s.t+.45)return;const k=cl((s.t-now)/.8,0,1),r0=m*.06;
+   g.lineWidth=6;g.strokeStyle='#ffffff';g.beginPath();g.arc(s.x,s.y,r0,0,7);g.stroke();g.strokeStyle=k<.15?'#7CFC00':'#ffd23f';g.beginPath();g.arc(s.x,s.y,r0+k*m*.2,0,7);g.stroke();
+   g.fillStyle='#0008';g.beginPath();g.arc(s.x,s.y,r0-3,0,7);g.fill();txt(i+1,s.x,s.y+m*.03,m*.08,'#fff')});
+ }
+ floats=floats.filter(f=>now-f.t<1);floats.forEach(f=>{g.globalAlpha=1-(now-f.t);txt(f.s,f.x,f.y-(now-f.t)*40,m*.06,f.c,'center','#000');g.globalAlpha=1});
+ if(S==='rel'||S==='throw'){
+  const dl=Math.max(0,-pos),bw=W*.7,bx=W*.15,by=H*.12;
+  g.fillStyle='#0a1a33cc';g.fillRect(bx,by,bw,16);g.fillStyle=dl<.6?'#ff4d4d':'#ffd23f';g.fillRect(bx,by,bw*(1-dl/GAP),16);
+  txt('HEITTOVIIVA',bx+bw,by-6,m*.035,'#fff','right','#000a');
+  if(S==='rel'&&!hold)txt('PAINA POHJAAN, VAPAUTA ENNEN VIIVAA',W/2,H*.82,Math.min(m*.055,W*.04),'#fff','center','#000');
+  if(hold||S==='throw'){const a=hold?ang:heldAng,cx=W/2,cy=H*.88,r=m*.22;
+   g.lineWidth=14;g.strokeStyle='#ffffff30';g.beginPath();g.arc(cx,cy,r,PI+.1,2*PI-.1);g.stroke();
+   const mk=(d)=>PI*(1+d/90);g.strokeStyle='#7CFC00';g.beginPath();g.arc(cx,cy,r,mk(31.5),mk(34.5));g.stroke();
+   g.strokeStyle='#ffd23f';g.lineWidth=6;g.beginPath();g.moveTo(cx+cos(PI*(1+a/90))*r*.5,cy+sin(PI*(1+a/90))*r*.5);g.lineTo(cx+cos(PI*(1+a/90))*r*1.08,cy+sin(PI*(1+a/90))*r*1.08);g.stroke();
+   txt(a.toFixed(1)+'°',cx,cy-r*.15,m*.09,'#fff','center','#000')}
+ }
+ if(intro){const k=cl((now-intro.start)/.3,0,1),p=(now-intro.start)/(intro.end-intro.start);g.fillStyle=`rgba(5,15,35,${.5*k})`;g.fillRect(0,H*.27,W,H*.27);g.globalAlpha=k;txt(intro.t,W/2,H*.38,m*.1,'#ffd23f','center','#000');txt(intro.s,W/2,H*.46,Math.min(m*.045,W*.04),'#fff','center','#000');g.fillStyle='#ffd23f';g.fillRect(W*.3,H*.5,W*.4*p,5);g.globalAlpha=1}
+ if(MODE==='comp'&&comp&&!aiMode&&['wait','run','steps','rel','throw','fly','land','res'].includes(S)){const c=comp,st=standings()[0];txt((c.round===3?'FINAALI':'Kierros '+(c.round+1)+'/3')+' · heittäjä '+Math.min(c.oi+1,c.order.length)+'/'+c.order.length+(st.best?' · johtaa '+st.n+' '+st.best.toFixed(1)+' m':''),10,H-10,m*.032,'#cfe0ff','left','#000')}
+ if(aiMode&&(S==='aiwait'||S==='throw'||S==='fly'||S==='land')){txt(aiMode.n,W/2,H*.12,m*.07,'#ffd23f','center','#000');txt(S==='aiwait'?'valmistautuu...':S==='land'&&aiMode.rank?aiMode.R.toFixed(2)+' m · '+aiMode.r0+'. → nyt '+aiMode.rank+'. / '+aiMode.pool:'heittää',W/2,H*.12+m*.05,m*.04,'#fff','center','#000')}
+ if(comp&&comp.round===3&&aiMode&&S==='land'){const rows=comp.P.filter(x=>x.fin).map(x=>({n:x.n,b:x===aiMode.p?Math.max(x.best,aiMode.R):x.best,c:x===aiMode.p})).sort((a,b)=>b.b-a.b),w=Math.min(W*.5,270),rh=m*.05,x0=W-w-8,y0=H*.2;
+  g.fillStyle='#0a1a33dd';g.beginPath();g.roundRect(x0,y0,w,rh*(rows.length+1.4),10);g.fill();txt('KOKONAISTILANNE',x0+w/2,y0+rh*.8,m*.03,'#ffd23f');
+  rows.forEach((r,i)=>{const yy=y0+rh*(i+1.8);if(r.c){g.fillStyle='#ffd23f44';g.fillRect(x0+4,yy-rh*.7,w-8,rh*.9)}txt((i+1)+'. '+r.n,x0+8,yy,m*.03,'#fff','left');txt(r.b.toFixed(1),x0+w-8,yy,m*.03,'#7CFC00','right')})}
+ if(S==='ai'){const c=comp,L=c.batch.slice(-8),w=Math.min(W*.9,480),h=m*.17+L.length*m*.065+(c.batch.length>8?m*.06:0),x=W/2-w/2,y=H/2-h/2;
+  g.fillStyle='#0a1a33ee';g.beginPath();g.roundRect(x,y,w,h,18);g.fill();g.strokeStyle='#ffd23f';g.lineWidth=3;g.stroke();
+  txt((c.round===3?'FINAALI':'KIERROS '+(c.round+1)+'/3')+' – heitot',W/2,y+m*.06,m*.05,'#ffd23f');let yy=y+m*.12;
+  if(c.batch.length>8){txt('…ja '+(c.batch.length-8)+' muuta',W/2,yy,m*.035,'#9ec1ff');yy+=m*.06}
+  L.forEach(r=>{txt(r.n,x+w*.06,yy,m*.04,'#fff','left');txt(r.R?r.R.toFixed(2)+' m':'HYLÄTTY',x+w*.94,yy,m*.04,r.R?'#7CFC00':'#ff6b6b','right');yy+=m*.065});
+  txt('napauta jatkaaksesi',W/2,y+h-m*.025,m*.032,'#9ec1ff')}
+ if(S==='fin'){const win=comp.win,me=win.me;g.fillStyle='#0a1a33aa';g.fillRect(0,H*.2,W,H*.45);
+  txt(me?'VOITIT KILPAILUN!':'Voittaja: '+win.n,W/2,H*.32,m*.085,me?'#ffd23f':'#fff','center','#000');txt(win.best.toFixed(2)+' m',W/2,H*.41,m*.07,'#7CFC00','center','#000');
+  g.font=`600 ${m*.04}px system-ui`;g.textAlign='center';g.fillStyle='#fff';let ln='',ls=[];comp.msg.split(' ').forEach(t=>{const q=ln?ln+' '+t:t;if(g.measureText(q).width>W*.85&&ln){ls.push(ln);ln=t}else ln=q});ls.push(ln);ls.forEach((l,i)=>g.fillText(l,W/2,H*.48+i*m*.05));
+  txt('napauta jatkaaksesi',W/2,H*.62,m*.033,'#9ec1ff')}
+ if(S==='res')result();
+ if((S==='land'||S==='res')&&res&&res.R){const R=res.R;seg([R,0,0],[R,3.4,0],.07,'#fff');
+  for(let k=0;k<5;k++){const a=k/5,b=(k+1)/5,wa=sin(tt*5-a*4)*.12*a,wb=sin(tt*5-b*4)*.12*b;quad([[R+a*3.2,3.3+wa,0],[R+b*3.2,3.3+wb,0],[R+b*3.2,2.0+wb,0],[R+a*3.2,2.0+wa,0]],'#e63946')}
+  text3(R.toFixed(2)+' m',[R+1.6,2.65,.02],[1,0,0],[0,1,0],.62,'#fff','#7a0000')}
+}
+function result(){
+ const m=Math.min(W,H),w=Math.min(W*.9,560),h=Math.min(H*(res.fact?.7:.84),420),x=W/2-w/2,y=res.fact?H*.27:H/2-h/2,e=cl((now-resT0)/.4,0,1);
+ g.save();g.globalAlpha=e;g.translate(0,(1-e)*40);
+ g.fillStyle='#0a1a33ee';g.beginPath();g.roundRect(x,y,w,h,22);g.fill();g.strokeStyle=res.foul?'#ff4d4d':'#ffd23f';g.lineWidth=4;g.stroke();
+ if(res.foul){if(MODE==='comp'){const q=compRank(comp.P[0],0);txt(rkTxt(q),W/2,H/2+m*.16,m*.045,'#7fe0ff')}txt(res.msg,W/2,H/2,Math.min(w*.075,m*.07),'#ff6b6b');txt('Napauta uutta yritystä varten',W/2,H/2+m*.08,m*.04,'#fff')}
+ else{shown=Math.min(res.R,shown+res.R*dt*1.2);txt(shown.toFixed(2)+' m',W/2,y+h*.26,Math.min(w*.17,m*.15),'#ffd23f','center','#000');
+  const msg=res.R>=90?'Maailmanennätystahtia!':res.R>=80?'Huikea heitto!':res.R>=70?'Hieno heitto':res.R>=60?'Kelpo heitto':'Hiotaan vielä';txt(msg,W/2,y+h*.345,m*.045,'#fff');if(res.rank===1)txt('UUSI ENNÄTYS – '+res.cat+'!',W/2,y+h*.405,m*.04,'#7CFC00');else if(res.rank<=3)txt('Ennätystaulukko: '+res.rank+'. sija ('+res.cat+')',W/2,y+h*.405,m*.036,'#ffd23f');
+  if(MODE==='comp'){const q=compRank(comp.P[0],res.R);txt(rkTxt(q),W/2,y+h*.465,m*.038,'#7fe0ff')}
+  let i=0;for(const k in res.L){const yy=y+h*.55+i*h*.075;txt(k,x+w*.1,yy,m*.04,'#cfe0ff','left');txt('−'+res.L[k].toFixed(1)+' m',x+w*.9,yy,m*.04,res.L[k]<1?'#7CFC00':res.L[k]<3?'#ffd23f':'#ff6b6b','right');i++}
+  txt('Ennätys ('+res.cat+'): '+best.toFixed(2)+' m   ·   '+(MODE==='comp'?'napauta jatkaaksesi':'napauta uusi heitto'),W/2,y+h*.95,m*.035,'#9ec1ff')}
+ if(res.fact){g.fillStyle='#10294bee';g.beginPath();g.roundRect(x,H*.03,w,H*.22,18);g.fill();g.strokeStyle='#7CFC00';g.lineWidth=3;g.stroke();txt('TIESITKÖ?',W/2,H*.03+m*.05,m*.045,'#7CFC00');
+  g.font=`600 ${m*.035}px system-ui`;g.textAlign='center';g.fillStyle='#fff';let ln='',ls=[];res.fact.split(' ').forEach(t=>{const q=ln?ln+' '+t:t;if(g.measureText(q).width>w*.9&&ln){ls.push(ln);ln=t}else ln=q});ls.push(ln);ls.forEach((l,i)=>g.fillText(l,W/2,H*.03+m*.095+i*m*.043))}
+ g.restore();
+}
+
+// ---------- kilpailu ----------
+let PROF={name:'Pelaaja',shirt:'#f4f7ff',shorts:'#1d4ed8',jav:'#e8eef5'};try{Object.assign(PROF,JSON.parse(LS.getItem('kh_prof')||'{}'))}catch(e){}
+COL=PROF;
+const SHI=['#f4f7ff','#e63946','#ffd23f','#3ad1ff','#8ac926','#ff9f1c','#111827','#a855f7'],SHO=['#1d4ed8','#111827','#e63946','#16a34a','#f4f7ff','#7c3aed'],JAV=['#e8eef5','#ffd23f','#ff5a5f','#3ad1ff','#8ac926','#ff9f1c'];
+const NAMES=['Keihäs-Kalle', 'Heitto-Hannu', 'Ylimene Yrjö', 'Tuuli-Tuula', 'Spagetti-Seppo', 'Mauno Maksimi', 'Piikki-Pirjo', 'Ristiaskel-Risto', 'Sivutuuli-Sirkku', 'Kulma-Kimmo', 'Lentävä Lasse', 'Kärki-Kerttu', 'Vastatuuli-Vesa', 'Pulkka-Pertti', 'Tärppi-Tapsa', 'Viivan Veikko', 'Kuula-Kaarina', 'Hyppy-Heikki', 'Nuoli-Niina', 'Paukku-Pasi', 'Teemu-teekkari', 'Osku-orava', 'Aleksi-alasin', 'Terhi-tulivuori', 'Hanna-hampurilainen', 'Mira-mursu', 'Suvi-sauna', 'Mika-makkara', 'Linda-liukumäki', 'Martti-mopo', 'Eemeli-etana', 'Venla-vohveli', 'Leevi-lettu', 'Neea-nuudeli', 'Matias-mikroaaltouuni', 'Viljo-vispilä', 'Viola-villasukka', 'Väinö-västäräkki', 'Eetu-eväsleipä', 'Edvin-elefantti', 'Felix-fonduu'];
+const CONG=['Mestari! Keihäs lensi kuin tuulen siivillä!','Kultaa kaulaan! Koko stadion nousee seisomaan!','Upea suoritus – yleisö huutaa nimeäsi!','Viivalta kärkeen: sinä olet kisan kuningas!','Tämä keihäs ei laskeudu ihan heti – mikä heitto!','Suomen keihäskansa kiittää ja kumartaa!','Historiaa tehtiin tänään, ja sinä olit mukana!'];
+const CONS=['Hyvä yritys – seuraavalla kerralla viivalle vielä kovempaa!','Keihäs lensi, mutta kultaa ei tällä kertaa.','Tuuli kääntyy vielä sinun puolellesi!'];
+const DIF=[{m:62,s:7,f:.08},{m:71,s:6,f:.06},{m:78,s:5,f:.05},{m:84,s:4.5,f:.04}];
+const gauss=()=>Math.sqrt(-2*Math.log(Math.random()||1e-9))*cos(2*PI*Math.random()),pick=a=>a[(Math.random()*a.length)|0];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function saveProf(){try{LS.setItem('kh_prof',JSON.stringify(PROF))}catch(e){}}
+function mkSw(id,key,list){const el=$(id);el.innerHTML='';list.forEach(c=>{const b=document.createElement('span');b.className='sw'+(PROF[key]===c?' on':'');b.style.background=c;b.onclick=()=>{PROF[key]=c;saveProf();mkSw(id,key,list)};el.appendChild(b)})}
+mkSw('swS','shirt',SHI);mkSw('swO','shorts',SHO);mkSw('swJ','jav',JAV);
+$('iNm').value=PROF.name;$('iNm').oninput=()=>{PROF.name=$('iNm').value.trim()||'Pelaaja';saveProf()};
+function menuPage(n){['m0','m1','m2'].forEach((id,i)=>$(id).style.display=i===n?'flex':'none')}
+function showMenu(){menuPage(0);MODE='menu';S='menu';comp=null;aiMode=null;intro=null;fwOn=false;fw=[];fly=null;res=null;COL=PROF;pos=START;best=catBest('p');$('board').style.display='none';$('menu').style.display='flex'}
+$('bP').onclick=()=>menuPage(1);$('bK').onclick=()=>menuPage(2);$('bE').onclick=()=>openTop();$('bS').onclick=openStats;$('bA').onclick=openSet;document.querySelectorAll('.bk').forEach(b=>b.onclick=()=>menuPage(0));
+$('bX').onclick=()=>{const o={};KEYS.forEach(k=>{const v=LS.getItem(k);if(v!=null)o[k]=v});const t=JSON.stringify(o);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>alert('Tiedot kopioitu leikepöydälle.'),()=>prompt('Kopioi tiedot:',t));else prompt('Kopioi tiedot:',t)};
+$('bI').onclick=()=>{const t=prompt('Liitä tiedot (tuonti korvaa nykyiset):');if(!t)return;try{const o=JSON.parse(t);if(typeof o!=='object'||!o)throw 0;KEYS.forEach(k=>{if(o[k]!=null)LS.setItem(k,o[k])});alert('Tuotu. Peli latautuu uudelleen.');location.reload()}catch(e){alert('Tiedot eivät kelvanneet.')}};
+$('bPr').onclick=()=>{$('menu').style.display='none';MODE='practice';reset()};
+$('bComp').onclick=()=>{const n=cl(Math.round(+$('iAI').value||8),1,20),ai=shuffle(NAMES.slice()).slice(0,n);
+ const P=[{n:PROF.name||'Pelaaja',me:1,t:[],best:0,col:PROF,sk:0}].concat(ai.map(nm=>({n:nm,t:[],best:0,sk:gauss()*3,col:{shirt:pick(SHI),shorts:pick(SHO),jav:pick(JAV)}})));
+ comp={P,diff:+$('iDf').value,round:0,order:shuffle(P.map((_,i)=>i)),oi:0,batch:[],anim:new Set(),pre:{}};$('menu').style.display='none';MODE='comp';compStep()};
+$('mbtn').onclick=()=>{if(S!=='wait')return;if(MODE==='comp'&&!confirm('Keskeytetäänkö kilpailu?'))return;showMenu()};
+function aiThrow(p){const d=DIF[comp.diff];if(Math.random()<d.f)return 0;return cl(d.m+p.sk+d.s*gauss(),18,97.5)}
+function compRank(p,R){const c=comp,pool=c.round===3?c.P.filter(x=>x.fin):c.P,b=Math.max(p.best,R);return{r:1+pool.filter(x=>x!==p&&x.best>b).length,n:pool.length,r0:p.r0}}
+function rkTxt(q){return comp.round===3?'Karsinnan jälkeen '+q.r0+'. → nyt '+q.r+'. / '+q.n:'Kilpailussa nyt: '+q.r+'. / '+q.n}
+function recordT(p,R){p.t.push(R);if(R>p.best)p.best=R}
+function standings(){return comp.P.slice().sort((a,b)=>b.best-a.best)}
+function showBoard(title,note,btn,cb){const f=x=>x?x.toFixed(2):'X';$('bt').textContent=title;$('bn').textContent=note;
+ $('bl').innerHTML=standings().map((p,i)=>`<div class="r ${p.me?'me':''} ${comp.round>=3&&!p.fin?'out':''}"><span>${i+1}. ${p.fin?'★ ':''}${esc(p.n)}</span><span>${p.t.map(f).join(' · ')}</span><b>${p.best.toFixed(2)}</b></div>`).join('');
+ $('bnext').textContent=btn;$('bnext').onclick=()=>{$('board').style.display='none';cb()};$('board').style.display='flex'}
+function compStep(){const c=comp;c.batch=[];
+ while(c.oi<c.order.length){const i=c.order[c.oi],p=c.P[i];
+  if(p.me){if(c.batch.length)break;reset();return}
+  if(c.round===3&&c.anim.has(i)){if(c.batch.length)break;aiMode={p,n:p.n,R:c.pre[i]};COL=p.col;fly=null;res=null;hold=false;intro=null;pos=-.6;relX=-.6;parts=[];cam.p=[pos-6.5,1.9,7.5];cam.t=[pos+3.5,1.2,0];aiT0=now;S='aiwait';return}
+  const R=c.round===3?c.pre[i]:aiThrow(p);recordT(p,R);c.batch.push({n:p.n,R});c.oi++}
+ if(c.batch.length){S='ai';return}
+ endRound()}
+function compHumanDone(){const c=comp,p=c.P[c.order[c.oi]];recordT(p,res&&!res.foul?res.R:0);c.oi++;compStep()}
+function endRound(){const c=comp,r=c.round;
+ if(r<2){c.round++;c.oi=0;showBoard('Tulostaulu – kierros '+(r+1)+'/3','','Kierros '+(r+2),compStep);return}
+ if(r===2){const st=standings(),k=Math.min(c.P.length,Math.max(3,Math.ceil(c.P.length*.2)));st.forEach((p,i)=>{p.fin=i<k;p.r0=i+1});
+  c.order=st.slice(0,k).reverse().map(p=>c.P.indexOf(p));c.round=3;c.oi=0;c.pre={};
+  c.order.forEach(i=>{if(!c.P[i].me)c.pre[i]=aiThrow(c.P[i])});
+  c.anim=new Set(c.order.filter(i=>!c.P[i].me&&c.pre[i]>0));
+  showBoard('Karsinta ohi','Finaaliin pääsi '+k+' parasta. '+(c.P[0].fin?'Pääsit finaaliin!':'Et päässyt finaaliin – seuraat kisaa katsomosta.'),'Finaali!',compStep);return}
+ const st=standings(),win=st[0];c.win=win;c.rank=st.indexOf(c.P[0])+1;histAdd({d:new Date().toLocaleString('fi-FI',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}),n:c.P.length,df:c.diff,pl:c.rank,W:win.n,wb:win.best,me:c.P[0].best,t:c.P[0].t.slice(),fin:!!c.P[0].fin,top:st.slice(0,5).map(p=>({n:p.n,b:p.best,me:!!p.me}))});c.msg=win.me?pick(CONG):pick(CONS);S='fin';fwOn=!!win.me;pos=-.6;COL=PROF}
+function finTap(){showBoard('Lopputulokset','Sijoituksesi: '+comp.rank+'/'+comp.P.length,'Valikkoon',showMenu)}
+
+// ---------- tilastot ----------
+let ST,HIST;try{ST=JSON.parse(LS.getItem('kh_stat'))}catch(e){}try{HIST=JSON.parse(LS.getItem('kh_hist'))}catch(e){}
+ST=ST||{h:{th:0,fl:0,sum:0,mx:0},k:{th:0,fl:0,sum:0,mx:0}};HIST=Array.isArray(HIST)?HIST:[];
+function statAdd(){if(!res)return;const s=ST[MODE==='comp'?'k':'h'];s.th++;if(res.foul||!res.R)s.fl++;else{s.sum+=res.R;s.mx=Math.max(s.mx,res.R)}try{LS.setItem('kh_stat',JSON.stringify(ST))}catch(e){}}
+function histAdd(h){HIST.unshift(h);HIST=HIST.slice(0,100);try{LS.setItem('kh_hist',JSON.stringify(HIST))}catch(e){}}
+function openStats(){const f=x=>x.toFixed(1),hs=HIST,n=hs.length,w=hs.filter(h=>h.pl===1).length,pod=hs.filter(h=>h.pl<=3).length,fin=hs.filter(h=>h.fin).length,avg=n?hs.reduce((a,h)=>a+h.pl,0)/n:0,bp=n?Math.min(...hs.map(h=>h.pl)):0;
+ const th=m=>{const q=ST[m],ok=q.th-q.fl;return `${q.th} heittoa · keskiarvo ${ok?f(q.sum/ok):'–'} m · paras ${f(q.mx)} m · hylättyjä ${q.th?Math.round(100*q.fl/q.th):0} %`};
+ const lv=[0,1,2,3].map(d=>{const h=hs.filter(x=>x.df===d);return `${CATN[d]}: ${h.length} kisaa, ${h.filter(x=>x.pl===1).length} voittoa`}).join('<br>');
+ $('tt').textContent='📊 TILASTOT';$('tabs0').innerHTML=$('tabs1').innerHTML=$('tabs').innerHTML='';
+ $('tl').innerHTML=`<div class="d" style="display:block"><b>Kilpailut</b><br>Kilpailuja: ${n}<br>Voittoja: ${w} (${n?Math.round(100*w/n):0} %)<br>Palkintopallilla: ${pod}<br>Finaaleissa: ${fin}<br>Keskisijoitus: ${n?avg.toFixed(1):'–'}<br>Paras sijoitus: ${n?bp+'.':'–'}<br><br>${lv}<br><br><b>Heitot</b><br>Harjoitus: ${th('h')}<br>Kilpailu: ${th('k')}</div><b style="display:block;margin:10px 0 4px">Kilpailuhistoria</b>`+(n?hs.map(h=>`<div class="r"><span>${h.d} · ${CATN[h.df]}</span><span>${h.pl}. / ${h.n} · ${h.me.toFixed(2)} m</span></div><div class="d">Voittaja: ${h.W} (${h.wb.toFixed(2)} m)<br>Finaaliin: ${h.fin?'kyllä':'ei'}<br>Omat heitot: ${h.t.map(x=>x?x.toFixed(2):'X').join(' · ')}<br>Kärki:<br>${h.top.map((x,i)=>(i+1)+'. '+(x.me?'<b>'+x.n+'</b>':x.n)+' '+x.b.toFixed(2)+' m').join('<br>')}</div>`).join(''):'<p>Ei vielä kilpailuja.</p>');wireRows()}
+// ---------- silmukka ----------
+function frame(ts){try{frame0(ts)}catch(e){let el=document.getElementById('err');if(!el){el=document.createElement('div');el.id='err';el.style.cssText='position:fixed;left:0;top:0;right:0;background:#900c;color:#fff;font:12px monospace;z-index:20;padding:4px';document.body.appendChild(el)}el.textContent='Virhe: '+e.message}requestAnimationFrame(frame)}
+function frame0(ts){
+ now=ts/1000;const gap=now-lastNow;dt=Math.min(.05,gap||.016);if(gap>.5&&S==='wait'&&!intro)waitT0+=gap;lastNow=now;
+ if(!wnd)wnd=windAt(0);
+ if(S==='menu'){const L=W>H;OX=L?W*.24:W/2;OY=L?H*.52:H*.27}else{OX=W/2;OY=H*.52}
+ update();world();
+ if(S==='fly'||S==='land'||(S==='res'&&res&&res.R)){if(fly){const sh=P(fly.x,0,0);if(sh){g.fillStyle='#0004';g.beginPath();g.ellipse(sh[0],sh[1],1.4*F/sh[2],.18*F/sh[2],0,0,7);g.fill()}javelin(fly.x,fly.y,fly.ja,.06);
+   if(S==='fly'&&fly.t<fly.T){g.globalAlpha=.5;for(let i=1;i<8;i++){const s2=cl((fly.t-i*.07)/fly.T,0,1),px=fly.x0+(fly.R-fly.x0)*s2,py=1.9*(1-s2)+4*fly.Hk*s2*(1-s2),q=P(px,py,0);if(q){g.fillStyle='#fff';g.beginPath();g.arc(q[0],q[1],Math.max(1,5-i*.5),0,7);g.fill()}}g.globalAlpha=1}}}
+ thrower();drawParts();fx();hud();
+ $('gear').style.display=$('trophy').style.display=$('mbtn').style.display=S==='wait'?'block':'none';
+}
+let thrown=0;
+showMenu();requestAnimationFrame(frame);
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+addEventListener('online',flushQ);flushQ();
+</script></body></html>
